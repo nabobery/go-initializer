@@ -1,0 +1,56 @@
+package mongodb
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"<%= modulePath %>/internal/config"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+)
+
+// Connect initializes and returns a MongoDB client instance
+func Connect(cfg *config.MongoConfig) (*mongo.Client, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Connection timeout
+	defer cancel()
+
+	// Construct MongoDB connection URI
+	uri := cfg.URI
+	if uri == "" { // Build URI if not provided directly
+		if cfg.User != "" && cfg.Password != "" {
+			uri = fmt.Sprintf("mongodb://%s:%s@%s", cfg.User, cfg.Password, cfg.Host)
+		} else {
+			uri = fmt.Sprintf("mongodb://%s", cfg.Host)
+		}
+		// Add options like replicaSet if needed
+	}
+
+	clientOptions := options.Client().ApplyURI(uri)
+
+	// Configure connection pool
+	clientOptions.SetMaxPoolSize(uint64(cfg.MaxPoolSize))
+	clientOptions.SetMinPoolSize(uint64(cfg.MinPoolSize))
+	maxConnIdleTime := time.Duration(cfg.MaxConnIdleTimeSeconds) * time.Second
+	clientOptions.SetMaxConnIdleTime(maxConnIdleTime)
+
+
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
+	}
+
+	// Ping the primary node to verify connection
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 2*time.Second) // Ping timeout
+	defer pingCancel()
+	err = client.Ping(pingCtx, readpref.Primary())
+	if err != nil {
+		// Disconnect if ping fails
+		_ = client.Disconnect(context.Background())
+		return nil, fmt.Errorf("failed to ping mongodb: %w", err)
+	}
+
+	return client, nil
+}

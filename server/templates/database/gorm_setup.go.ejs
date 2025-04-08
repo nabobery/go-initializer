@@ -1,0 +1,83 @@
+package gormdb
+
+import (
+	"fmt"
+	"log" // Or use configured logger
+	"time"
+
+	"<%= modulePath %>/internal/config"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+// Connect initializes and returns a GORM database instance
+func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+	var dsn string
+	var dialector gorm.Dialector
+
+	switch cfg.Driver {
+	case "postgres":
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s",
+			cfg.Host, cfg.User, cfg.Password, cfg.Name, cfg.Port, cfg.SSLMode, cfg.TimeZone)
+		dialector = postgres.Open(dsn)
+	case "mysql":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
+		dialector = mysql.Open(dsn)
+	case "sqlite":
+		dsn = cfg.Name // For SQLite, Name is typically the file path
+		dialector = sqlite.Open(dsn)
+	default:
+		return nil, fmt.Errorf("unsupported database driver: %s", cfg.Driver)
+	}
+
+	// Configure GORM logger (example: Silent in production, Info in development)
+	gormLogLevel := logger.Silent
+	// if cfg.LogLevel == "info" || cfg.LogLevel == "debug" { // Assuming LogLevel in cfg
+	// 	gormLogLevel = logger.Info
+	// }
+
+	newLogger := logger.New(
+		log.New(log.Writer(), "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second,    // Slow SQL threshold
+			LogLevel:                  gormLogLevel, // Log level
+			IgnoreRecordNotFoundError: true,           // Ignore ErrRecordNotFound error for logger
+			Colorful:                  false,          // Disable color
+		},
+	)
+
+
+	db, err := gorm.Open(dialector, &gorm.Config{
+		Logger: newLogger,
+		// Add other GORM configurations if needed
+		// NamingStrategy: schema.NamingStrategy{ ... },
+		// PrepareStmt: true, // Caching prepared statements
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect database (%s): %w", cfg.Driver, err)
+	}
+
+	// Optional: Configure connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetimeMinutes) * time.Minute)
+
+
+	// Optional: Ping database to verify connection
+	if err = sqlDB.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+
+	return db, nil
+}

@@ -1,0 +1,121 @@
+package config
+
+import (
+	"time"
+
+	"github.com/spf13/viper"
+)
+
+// Config holds all configuration for the application.
+// Values are read by viper from environment variables or a config file.
+type Config struct {
+	App      AppConfig      `mapstructure:",squash"` // Or `mapstructure:"app"` if nested in file
+	Server   ServerConfig   `mapstructure:"server"`
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>Database DatabaseConfig `mapstructure:"database"`<% } %>
+	<% if (database === 'mongodb') { %>Mongo    MongoConfig    `mapstructure:"mongo"`<% } %>
+	// Add other config sections like CORS, JWT, etc. as needed
+	LogLevel string         `mapstructure:"LOG_LEVEL"` // Example top-level env var
+}
+
+// AppConfig contains application specific configuration
+type AppConfig struct {
+	Name string `mapstructure:"APP_NAME"`
+	Env  string `mapstructure:"APP_ENV"` // development, staging, production
+}
+
+// ServerConfig contains server specific configuration
+type ServerConfig struct {
+	Port int    `mapstructure:"SERVER_PORT"`
+	Mode string `mapstructure:"SERVER_MODE"` // debug, release, test
+	// ReadTimeout  time.Duration `mapstructure:"SERVER_READ_TIMEOUT"`
+	// WriteTimeout time.Duration `mapstructure:"SERVER_WRITE_TIMEOUT"`
+	// IdleTimeout  time.Duration `mapstructure:"SERVER_IDLE_TIMEOUT"`
+}
+
+<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+// DatabaseConfig contains relational database configuration
+type DatabaseConfig struct {
+	Driver               string `mapstructure:"DB_DRIVER"`   // e.g., postgres, mysql, sqlite
+	Host                 string `mapstructure:"DB_HOST"`
+	Port                 int    `mapstructure:"DB_PORT"`
+	User                 string `mapstructure:"DB_USER"`
+	Password             string `mapstructure:"DB_PASSWORD"`
+	Name                 string `mapstructure:"DB_NAME"`
+	SSLMode              string `mapstructure:"DB_SSL_MODE"` // e.g., disable, require, verify-full (for Postgres)
+	TimeZone             string `mapstructure:"DB_TIMEZONE"` // e.g., UTC, Asia/Shanghai
+	MaxIdleConns         int    `mapstructure:"DB_MAX_IDLE_CONNS"`
+	MaxOpenConns         int    `mapstructure:"DB_MAX_OPEN_CONNS"`
+	ConnMaxLifetimeMinutes int  `mapstructure:"DB_CONN_MAX_LIFETIME_MINUTES"`
+	// LogLevel string `mapstructure:"DB_LOG_LEVEL"` // info, silent, error, warn
+}
+<% } %>
+
+<% if (database === 'mongodb') { %>
+// MongoConfig contains MongoDB configuration
+type MongoConfig struct {
+	URI                  string `mapstructure:"MONGO_URI"` // Optional: Full connection string
+	Host                 string `mapstructure:"MONGO_HOST"` // Used if URI is not set
+	Name                 string `mapstructure:"MONGO_DB_NAME"`
+	User                 string `mapstructure:"MONGO_USER"`     // Optional
+	Password             string `mapstructure:"MONGO_PASSWORD"` // Optional
+	MaxPoolSize          int    `mapstructure:"MONGO_MAX_POOL_SIZE"`
+	MinPoolSize          int    `mapstructure:"MONGO_MIN_POOL_SIZE"`
+	MaxConnIdleTimeSeconds int  `mapstructure:"MONGO_MAX_CONN_IDLE_TIME_SECONDS"`
+	// Add replica set, auth mechanism etc. if needed
+}
+<% } %>
+
+
+// LoadConfig reads configuration from file or environment variables.
+func LoadConfig(path string) (config Config, err error) {
+	// Set default values
+	viper.SetDefault("APP_NAME", "<%= projectName %>")
+	viper.SetDefault("APP_ENV", "development")
+	viper.SetDefault("LOG_LEVEL", "info")
+	viper.SetDefault("SERVER_PORT", 8080)
+	viper.SetDefault("SERVER_MODE", "debug") // For Gin mode
+
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+	viper.SetDefault("database.DB_DRIVER", "<%= database %>")
+	viper.SetDefault("database.DB_HOST", "localhost")
+	<% if (database === 'postgres') { %>viper.SetDefault("database.DB_PORT", 5432)<% } %>
+	<% if (database === 'mysql') { %>viper.SetDefault("database.DB_PORT", 3306)<% } %>
+	<% if (database === 'sqlite') { %>viper.SetDefault("database.DB_NAME", "<%= projectName %>.db")<% } else { %>viper.SetDefault("database.DB_NAME", "<%= projectName %>")<% } %>
+	viper.SetDefault("database.DB_USER", "user")
+	viper.SetDefault("database.DB_PASSWORD", "password")
+	viper.SetDefault("database.DB_SSL_MODE", "disable")
+	viper.SetDefault("database.DB_TIMEZONE", "UTC")
+	viper.SetDefault("database.DB_MAX_IDLE_CONNS", 10)
+	viper.SetDefault("database.DB_MAX_OPEN_CONNS", 100)
+	viper.SetDefault("database.DB_CONN_MAX_LIFETIME_MINUTES", 60)
+	<% } %>
+
+	<% if (database === 'mongodb') { %>
+	viper.SetDefault("mongo.MONGO_HOST", "localhost:27017")
+	viper.SetDefault("mongo.MONGO_DB_NAME", "<%= projectName %>")
+	viper.SetDefault("mongo.MONGO_MAX_POOL_SIZE", 100)
+	viper.SetDefault("mongo.MONGO_MIN_POOL_SIZE", 10)
+	viper.SetDefault("mongo.MONGO_MAX_CONN_IDLE_TIME_SECONDS", 300)
+	<% } %>
+
+
+	// Tell viper the path/name/type of config files
+	viper.AddConfigPath(path)       // Path to look for the config file in
+	viper.SetConfigName("config")   // Name of config file (without extension)
+	viper.SetConfigType("yaml")     // REQUIRED if the config file does not have the extension in the name (e.g. "yaml", "json", "env")
+
+	viper.AutomaticEnv() // Read in environment variables that match
+
+	// If a config file is found, read it in.
+	if err = viper.ReadInConfig(); err != nil {
+		// If config file not found, ignore; otherwise return error
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return
+		}
+		// Config file not found; Rely on environment variables and defaults
+	}
+
+	// Unmarshal the config into the Config struct
+	err = viper.Unmarshal(&config)
+	return
+}

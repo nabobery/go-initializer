@@ -4,12 +4,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
-const connectDB = require('./config/db');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+// const connectDB = require('./config/db');
 const logger = require('./utils/logger');
 const generateRoutes = require('./routes/generate');
 
 // Connect to Database
-connectDB();
+// connectDB();
 
 const app = express();
 
@@ -26,6 +28,29 @@ app.use(morgan('dev', { stream: { write: (message) => logger.info(message.trim()
 // Body Parsers
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+
+// --- Swagger Setup ---
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Go Initializer API',
+            version: '1.0.0',
+            description: 'API documentation for Go Initializer backend'
+        },
+        servers: [
+            {
+                url: 'http://localhost:' + (process.env.PORT || 5001),
+                description: 'Development server'
+            }
+        ]
+    },
+    apis: [path.join(__dirname, './routes/*.js'), path.join(__dirname, './controllers/*.js')]
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // --- API Routes ---
