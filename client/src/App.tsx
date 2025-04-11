@@ -1,37 +1,56 @@
-import { CssBaseline, ThemeProvider } from '@mui/material';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import Header from './components/Layout/Header';
-import Footer from './components/Layout/Footer';
-import { useThemeMode } from './hooks/useThemeMode';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import HomePage from "./pages/HomePage";
+import Header from "./components/Layout/Header";
+import Footer from "./components/Layout/Footer";
 
-function App() {
-    const { theme, themeMode, toggleThemeMode } = useThemeMode();
+export default function App() {
+  const [themeMode, setThemeMode] = useState<"light" | "dark">(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+    // If no saved value, check system preference
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
-    return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline /> {/* Ensures consistent baseline styling */}
-            <Router>
-                {/* Flex container to manage layout */}
-                <div className="flex flex-col min-h-screen"> {/* Use flex column, ensure min height of viewport */}
-                    <Header themeMode={themeMode} toggleThemeMode={toggleThemeMode} />
+  useEffect(() => {
+    // Update document class for dark mode
+    if (themeMode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    // Save preference
+    localStorage.setItem("theme", themeMode);
+  }, [themeMode]);
 
-                    {/* Main content area */}
-                    {/* flex-grow allows this element to take up available space */}
-                    {/* Removed padding from here, let HomePage handle its own padding */}
-                    {/* Added background color here for consistency across pages */}
-                    <main className="flex-grow w-full bg-gray-100 dark:bg-gray-900"> {/* Ensure main area takes remaining space and has the background */}
-                        <Routes>
-                            <Route path="/" element={<HomePage />} />
-                            {/* Add other routes here if needed */}
-                        </Routes>
-                    </main>
+  const toggleThemeMode = () => {
+    setThemeMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
-                    <Footer /> {/* Footer will be pushed to the bottom */}
-                </div>
-            </Router>
-        </ThemeProvider>
-    );
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
+        <Header themeMode={themeMode} toggleThemeMode={toggleThemeMode} />
+
+        <motion.main
+          className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <AnimatePresence mode="wait">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              {/* Add other routes here */}
+            </Routes>
+          </AnimatePresence>
+        </motion.main>
+
+        <Footer />
+      </div>
+    </Router>
+  );
 }
-
-export default App;

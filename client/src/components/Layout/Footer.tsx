@@ -34,7 +34,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <motion.li whileHover={{ x: 5 }}>
                 <a
-                  href="https://github.com/yourusername/go-initializer"
+                  href="https://github.com/nabobery/go-initializer"
                   className="text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   GitHub Repository
@@ -57,14 +57,14 @@ export default function Footer() {
               Connect
             </h3>
             <ul className="space-y-2">
-              <motion.li whileHover={{ x: 5 }}>
+              {/* <motion.li whileHover={{ x: 5 }}>
                 <a
                   href="https://twitter.com/yourusername"
                   className="text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   Twitter
                 </a>
-              </motion.li>
+              </motion.li> */}
               <motion.li whileHover={{ x: 5 }}>
                 <a
                   href="mailto:contact@example.com"
