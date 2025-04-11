@@ -1,35 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import Header from './components/Layout/Header';
+import Footer from './components/Layout/Footer';
+import { useThemeMode } from './hooks/useThemeMode';
 
 function App() {
-  const [count, setCount] = useState(0)
+    const { theme, themeMode, toggleThemeMode } = useThemeMode();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline /> {/* Ensures consistent baseline styling */}
+            <Router>
+                {/* Flex container to manage layout */}
+                <div className="flex flex-col min-h-screen"> {/* Use flex column, ensure min height of viewport */}
+                    <Header themeMode={themeMode} toggleThemeMode={toggleThemeMode} />
+
+                    {/* Main content area */}
+                    {/* flex-grow allows this element to take up available space */}
+                    {/* Removed padding from here, let HomePage handle its own padding */}
+                    {/* Added background color here for consistency across pages */}
+                    <main className="flex-grow w-full bg-gray-100 dark:bg-gray-900"> {/* Ensure main area takes remaining space and has the background */}
+                        <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            {/* Add other routes here if needed */}
+                        </Routes>
+                    </main>
+
+                    <Footer /> {/* Footer will be pushed to the bottom */}
+                </div>
+            </Router>
+        </ThemeProvider>
+    );
 }
 
-export default App
+export default App;
