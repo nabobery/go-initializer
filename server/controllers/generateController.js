@@ -19,7 +19,7 @@ const generateProject = async (req, res) => {
             user: Joi.string().optional(),
             password: Joi.string().optional(),
             dbName: Joi.string().optional(),
-            uri: Joi.string().optional()
+            uri: Joi.string().optional().allow(''),
         }).optional(),
         features: Joi.array().items(Joi.string()).optional()
     });
