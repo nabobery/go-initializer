@@ -1,0 +1,28 @@
+{
+  "installCommand": "npm ci --prefix client && npm ci --prefix server",
+  "buildCommand": "npm run build --prefix client",
+  "outputDirectory": "client/dist",
+  "functions": {
+    "server/**/*.js": {
+      "memory": 128
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api-docs/(.*)",
+      "destination": "/server/index.js"
+    },
+    {
+      "source": "/api-docs",
+      "destination": "/server/index.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/server/index.js"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
