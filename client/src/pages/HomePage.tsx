@@ -23,7 +23,7 @@ function HomePage() {
     goVersion: state.goVersion,
     dbConfig: state.dbConfig,
   }));
-  const { projectName, goVersion } = useConfigStore();
+  const { goVersion } = useConfigStore();
 
   const [isLoadingDownload, setIsLoadingDownload] = useState(false);
   const [error, setError] = useState<string | null>(null);
