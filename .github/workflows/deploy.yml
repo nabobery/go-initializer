@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: '20' # Match your project's Node version
           cache: 'npm'
+          # Add this line to specify where lock files are located
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install Server Dependencies
         run: npm ci --prefix server # Use ci for consistency
