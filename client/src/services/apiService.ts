@@ -16,8 +16,9 @@ type ProjectConfig = Omit<
 >;
 
 // Determine API base URL based on environment
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api"; // Use env var or default
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api"; // Use env var or default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

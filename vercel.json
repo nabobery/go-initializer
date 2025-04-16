@@ -9,11 +9,7 @@
   },
   "rewrites": [
     {
-      "source": "/api-docs/(.*)",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/api-docs",
+      "source": "/api-docs.json",
       "destination": "/api/index.js"
     },
     {
