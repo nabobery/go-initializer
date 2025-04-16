@@ -44,7 +44,7 @@ jobs:
       - name: Run Server Tests (Example)
         run: npm test --prefix server # Ensure you have a test script
         env:
-          NODE_ENV: test
+          NODE_ENV: production
           # Add any test-specific environment variables if needed
           # MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }} # Example
 
