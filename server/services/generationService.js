@@ -2,6 +2,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const ejs = require("ejs");
 const archiver = require("archiver");
+const os = require("os");
 const logger = require("../utils/logger");
 
 const generateProjectFiles = async (options) => {
@@ -14,7 +15,10 @@ const generateProjectFiles = async (options) => {
     database,
     dbConfig,
   } = options;
-  const tempDir = path.join(__dirname, "..", "temp", projectName); // Unique temp dir
+  const tempDir = path.join(
+    os.tmpdir(),
+    `go-init-${projectName}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   try {
     await fs.ensureDir(tempDir);
@@ -97,7 +101,6 @@ const generateProjectFiles = async (options) => {
         );
         const content = await ejs.renderFile(templatePath, templateData);
         await fs.writeFile(file.output, content);
-
       } else if (file.content) {
         await fs.writeFile(file.output, file.content); // For static content
       } else {
@@ -106,11 +109,13 @@ const generateProjectFiles = async (options) => {
     }
 
     // After all files are generated, format all Go files in the project directory
-    const { execSync } = require('child_process');
+    const { execSync } = require("child_process");
     try {
       execSync(`gofmt -w "${tempDir}"`);
     } catch (err) {
-      logger.warn(`Could not format Go files in ${tempDir} with gofmt: ${err.message}`);
+      logger.warn(
+        `Could not format Go files in ${tempDir} with gofmt: ${err.message}`
+      );
     }
 
     // --- Create go.sum (empty for now, user needs to run `go mod tidy`) ---
