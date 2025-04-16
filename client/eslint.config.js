@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["dist"],
+    ignores: ["dist", "public/api-docs/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
