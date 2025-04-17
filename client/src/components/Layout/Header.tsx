@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  SunIcon,
+  MoonIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import clerkAppearance from "../../styles/clerkTheme";
+import * as clerkThemes from "@clerk/themes";
 
 interface HeaderProps {
   themeMode: "light" | "dark";
@@ -50,6 +58,24 @@ export default function Header({ themeMode, toggleThemeMode }: HeaderProps) {
                 )}
               </button>
             </motion.div>
+            {/* Clerk Auth Buttons */}
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  ...clerkAppearance,
+                  baseTheme: themeMode === "dark" ? clerkThemes.dark : clerkThemes.experimental__simple,
+                }}
+              />
+            </SignedIn>
+            <SignedOut>
+              <Link
+                to="/sign-in"
+                className="ml-4 text-primary-600 dark:text-primary-400 font-semibold hover:underline"
+              >
+                Sign In
+              </Link>
+            </SignedOut>
           </div>
 
           {/* Mobile menu button */}
@@ -60,7 +86,7 @@ export default function Header({ themeMode, toggleThemeMode }: HeaderProps) {
             >
               <span className="sr-only">Open main menu</span>
               {isOpen ? (
-                <XMarkIcon  className="block h-6 w-6" aria-hidden="true" />
+                <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
               ) : (
                 <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
               )}
@@ -83,6 +109,24 @@ export default function Header({ themeMode, toggleThemeMode }: HeaderProps) {
             >
               {themeMode === "dark" ? "Light Mode" : "Dark Mode"}
             </button>
+            {/* Clerk Auth Buttons for Mobile */}
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  ...clerkAppearance,
+                  baseTheme: themeMode === "dark" ? clerkThemes.dark : clerkThemes.experimental__simple,
+                }}
+              />
+            </SignedIn>
+            <SignedOut>
+              <Link
+                to="/sign-in"
+                className="block mt-2 text-primary-600 dark:text-primary-400 font-semibold hover:underline"
+              >
+                Sign In
+              </Link>
+            </SignedOut>
           </div>
         </motion.div>
       </nav>

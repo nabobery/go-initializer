@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import HomePage from "./pages/HomePage";
 import Header from "./components/Layout/Header";
 import Footer from "./components/Layout/Footer";
+import { SignIn, SignUp, Protect } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
+import clerkAppearance from "./styles/clerkTheme";
+import * as clerkThemes from "@clerk/themes";
 
 export default function App() {
   const [themeMode, setThemeMode] = useState<"light" | "dark">(() => {
@@ -12,7 +16,9 @@ export default function App() {
       return savedTheme;
     }
     // If no saved value, check system preference
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
@@ -44,6 +50,56 @@ export default function App() {
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route
+                path="/sign-in/*"
+                element={
+                  <SignIn
+                    routing="path"
+                    path="/sign-in"
+                    signUpUrl="/sign-up"
+                    appearance={{
+                      ...clerkAppearance,
+                      baseTheme:
+                        themeMode === "dark"
+                          ? clerkThemes.dark
+                          : clerkThemes.experimental__simple,
+                    }}
+                  />
+                }
+              />
+              <Route
+                path="/sign-up/*"
+                element={
+                  <SignUp
+                    routing="path"
+                    path="/sign-up"
+                    signInUrl="/sign-in"
+                    appearance={{
+                      ...clerkAppearance,
+                      baseTheme:
+                        themeMode === "dark"
+                          ? clerkThemes.dark
+                          : clerkThemes.experimental__simple,
+                    }}
+                  />
+                }
+              />
+              <Route
+                path="/protected"
+                element={
+                  <Protect
+                    condition={(isSignedIn) => !!isSignedIn}
+                    fallback={
+                      <p>
+                        Please <Link to="/sign-in">sign in</Link> to view this
+                        page.
+                      </p>
+                    }
+                  >
+                    <div>This page is protected.</div>
+                  </Protect>
+                }
+              />
               {/* Add other routes here */}
             </Routes>
           </AnimatePresence>

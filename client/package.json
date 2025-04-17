@@ -11,6 +11,8 @@
     "test": "exit 0"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^4.0.0",
+    "@clerk/themes": "^2.2.32",
     "@heroicons/react": "^2.1.1",
     "axios": "^1.8.4",
     "clsx": "^2.1.0",
