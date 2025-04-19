@@ -5,6 +5,9 @@ const {
   readProjectFiles,
 } = require("../services/generationService");
 const logger = require("../utils/logger");
+const {
+  validateProjectConfig,
+} = require("../validators/projectConfigValidator");
 
 /**
  * @swagger
@@ -66,31 +69,7 @@ const logger = require("../utils/logger");
 const previewProject = async (req, res) => {
   logger.info("Received preview request:", req.body);
 
-  // Joi validation (copied from generateController)
-  const schema = Joi.object({
-    modulePath: Joi.string().required(),
-    projectName: Joi.string().optional(),
-    framework: Joi.string().required(),
-    goVersion: Joi.string().optional(),
-    database: Joi.string()
-      .valid("mongodb", "sqlite", "postgres", "mysql")
-      .optional(),
-    dbConfig: Joi.object({
-      host: Joi.string().optional(),
-      port: Joi.alternatives().try(Joi.string(), Joi.number()).optional(),
-      user: Joi.string().optional(),
-      password: Joi.string().optional(),
-      dbName: Joi.string().optional(),
-      uri: Joi.string().optional().allow(""),
-    }).optional(),
-    features: Joi.array().items(Joi.string()).optional(),
-  });
-
-  const { value: options, error } = schema.validate(req.body, {
-    abortEarly: false,
-    allowUnknown: true,
-    stripUnknown: true,
-  });
+  const { value: options, error } = validateProjectConfig(req.body);
 
   if (error) {
     logger.warn("Validation failed:", error.details);
@@ -105,7 +84,8 @@ const previewProject = async (req, res) => {
     options.projectName || options.modulePath.split("/").pop() || "my-go-app";
   options.goVersion = options.goVersion || "1.24.1";
   if (!options.database) {
-    options.database = "mongodb";
+    // options.database = "mongodb";
+    options.database = "none";
   }
 
   let tempDir = null;

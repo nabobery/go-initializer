@@ -74,12 +74,12 @@ const generateProjectFiles = async (options) => {
       },
 
       // Database setup
-      {
-        template: ["sqlite", "postgres", "mysql"].includes(database)
-          ? "database/gorm_setup.go.ejs"
-          : "database/mongo_setup.go.ejs",
-        output: path.join(tempDir, "internal", "config", "db.go"),
-      },
+      // {
+      //   template: ["sqlite", "postgres", "mysql"].includes(database)
+      //     ? "database/gorm_setup.go.ejs"
+      //     : "database/mongo_setup.go.ejs",
+      //   output: path.join(tempDir, "internal", "config", "db.go"),
+      // },
 
       // Config struct
       {
@@ -93,6 +93,18 @@ const generateProjectFiles = async (options) => {
         output: path.join(tempDir, "configs", ".env.example"),
       },
     ];
+
+    if (["sqlite", "postgres", "mysql"].includes(database)) {
+      filesToGenerate.push({
+        template: "database/gorm_setup.go.ejs",
+        output: path.join(tempDir, "internal", "config", "db.go"),
+      });
+    } else if (database === "mongodb") {
+      filesToGenerate.push({
+        template: "database/mongo_setup.go.ejs",
+        output: path.join(tempDir, "internal", "config", "db.go"),
+      });
+    }
 
     for (const file of filesToGenerate) {
       if (file.template) {
