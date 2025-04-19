@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { saveAs } from "file-saver";
 import {
@@ -18,6 +18,9 @@ import {
   ProjectPreview,
 } from "../services/apiService";
 import PreviewModal from "../components/PreviewModal";
+import AppTour from "../components/Tour/AppTour";
+
+type DbConfig = Record<string, unknown>;
 
 function HomePage() {
   const config = useConfigStore((state) => ({
@@ -27,7 +30,7 @@ function HomePage() {
     modulePath: state.modulePath,
     projectName: state.projectName,
     goVersion: state.goVersion,
-    dbConfig: state.dbConfig,
+    dbConfig: state.dbConfig as DbConfig,
   }));
   const { goVersion, projectName } = useConfigStore();
 
@@ -40,7 +43,12 @@ function HomePage() {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleDownload = async () => {
+  // Tour state
+  const [isTourRunning, setIsTourRunning] = useState(false);
+  const startTour = () => setIsTourRunning(true);
+  const handleTourComplete = () => setIsTourRunning(false);
+
+  const handleDownload = useCallback(async () => {
     setIsLoadingDownload(true);
     setError(null);
     try {
@@ -71,9 +79,9 @@ function HomePage() {
     } finally {
       setIsLoadingDownload(false);
     }
-  };
+  }, [config]);
 
-  const handleOpenPreview = async () => {
+  const handleOpenPreview = useCallback(async () => {
     setIsLoadingPreview(true);
     setPreviewError(null);
     setPreviewData(null);
@@ -104,7 +112,7 @@ function HomePage() {
     } finally {
       setIsLoadingPreview(false);
     }
-  };
+  }, [config]);
 
   const handleClosePreview = () => {
     setIsModalOpen(false);
@@ -112,6 +120,8 @@ function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      {/* App Tour */}
+      <AppTour run={isTourRunning} onTourComplete={handleTourComplete} />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -119,7 +129,7 @@ function HomePage() {
         className="space-y-8"
       >
         {/* Header Section */}
-        <div className="text-center">
+        <div className="text-center relative">
           <motion.h1
             className="text-4xl font-bold text-gray-900 dark:text-white mb-3"
             initial={{ opacity: 0, y: -20 }}
@@ -146,6 +156,17 @@ function HomePage() {
               <ChevronRightIcon className="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-0.5" />
             </a>
           </motion.p>
+          {/* Tour Help Button */}
+          <button
+            onClick={startTour}
+            className="absolute top-0 right-0 mt-2 mr-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-200 hover:bg-primary-200 dark:hover:bg-primary-800/60 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 z-20"
+            title="Take a guided tour"
+            id="tour-help-button"
+            type="button"
+          >
+            <QuestionMarkCircleIcon className="w-5 h-5" />
+            <span className="hidden sm:inline">Tour</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
