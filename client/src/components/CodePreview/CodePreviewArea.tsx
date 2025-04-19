@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import FileTree from "./FileTree";
 import GoEditor from "./Editor";
 import { ProjectPreview } from "../../services/apiService";
@@ -18,6 +19,8 @@ function CodePreviewArea({
   const [fileContent, setFileContent] = useState<string | null>(
     "// Select a file from the tree to view its content"
   );
+  const [isResizing, setIsResizing] = useState(false);
+  const [splitWidth, setSplitWidth] = useState(25); // Default 25% width for file tree
 
   // Effect to update editor content when selected file or preview data changes
   useEffect(() => {
@@ -41,9 +44,36 @@ function CodePreviewArea({
     // }
   }, [previewData]);
 
+  // Handle resize functionality
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = document.getElementById("code-preview-container");
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const newWidth =
+          ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        setSplitWidth(Math.max(15, Math.min(40, newWidth)));
+      }
+    };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full w-full text-gray-400">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="flex items-center justify-center h-full w-full text-gray-400 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-dark-bg dark:via-dark-card dark:to-gray-900 rounded-lg shadow-lg"
+      >
         <svg
           className="animate-spin h-6 w-6 mr-3"
           xmlns="http://www.w3.org/2000/svg"
@@ -65,15 +95,35 @@ function CodePreviewArea({
           ></path>
         </svg>
         Loading Preview...
-      </div>
+      </motion.div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 text-red-600 dark:text-red-400 text-center h-full flex items-center justify-center">
-        Error loading preview: {error}
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-4 text-red-600 dark:text-red-400 text-center h-full flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-gray-100 dark:from-red-900/20 dark:via-dark-card dark:to-gray-900 rounded-lg shadow-lg"
+      >
+        <div className="bg-red-100 dark:bg-red-900/20 p-4 rounded-lg shadow">
+          <svg
+            className="w-8 h-8 mx-auto mb-2 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          Error loading preview: {error}
+        </div>
+      </motion.div>
     );
   }
 
@@ -83,29 +133,82 @@ function CodePreviewArea({
     previewData.structure.length === 0
   ) {
     return (
-      <div className="flex items-center justify-center h-full w-full p-2 text-center">
-        <span className="text-gray-500 dark:text-gray-400">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center justify-center h-full w-full p-2 text-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-dark-bg dark:via-dark-card dark:to-gray-900 rounded-lg shadow-lg"
+      >
+        <span className="text-gray-500 dark:text-gray-400 animate-pulse">
           Preview will appear here.
         </span>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="flex h-full w-full">
+    <motion.div
+      id="code-preview-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex h-full w-full rounded-lg overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-dark-bg dark:via-dark-card dark:to-gray-900"
+      style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)" }}
+    >
       {/* File Tree Column */}
-      <div className="h-full w-1/3 lg:w-1/4 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-dark-card">
-        <FileTree
-          filePaths={previewData.structure}
-          onSelectFile={setSelectedFile}
-          initialSelectedFile={selectedFile}
-        />
-      </div>
+      <motion.div
+        className="h-full border-r border-gray-200 dark:border-dark-border flex-shrink-0 bg-white dark:bg-dark-card rounded-l-lg overflow-hidden"
+        style={{ width: `${splitWidth}%` }}
+        layout
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="file-tree"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
+          >
+            <FileTree
+              filePaths={previewData.structure}
+              onSelectFile={setSelectedFile}
+              initialSelectedFile={selectedFile}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Resizer */}
+      <div
+        className={`w-1 cursor-col-resize bg-gray-200 dark:bg-gray-700 hover:bg-primary-400 dark:hover:bg-primary-600 active:bg-primary-500 dark:active:bg-primary-500 transition-colors ${
+          isResizing ? "bg-primary-500 dark:bg-primary-500" : ""
+        }`}
+        onMouseDown={startResize}
+        style={{ zIndex: 10 }}
+      />
+
       {/* Editor Column */}
-      <div className="h-full flex-grow bg-gray-800">
-        <GoEditor content={fileContent} fileName={selectedFile ?? undefined} />
-      </div>
-    </div>
+      <motion.div
+        className="h-full flex-grow bg-gray-800 rounded-r-lg overflow-hidden"
+        style={{ width: `${100 - splitWidth}%` }}
+        layout
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedFile || "no-selection"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="h-full"
+          >
+            <GoEditor
+              content={fileContent}
+              fileName={selectedFile ?? undefined}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
   );
 }
 
