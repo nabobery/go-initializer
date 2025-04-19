@@ -5,13 +5,19 @@ import {
   ChevronRightIcon,
   ArrowDownTrayIcon,
   EyeIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import FrameworkSelector from "../components/ConfigForm/FrameworkSelector";
 import DatabaseSelector from "../components/ConfigForm/DatabaseSelector";
 import FeatureSelector from "../components/ConfigForm/FeatureSelector";
 import MetadataInput from "../components/ConfigForm/MetadataInput";
 import { useConfigStore } from "../store/useConfigStore";
-import { generateProjectZip } from "../services/apiService";
+import {
+  generateProjectZip,
+  getProjectPreview,
+  ProjectPreview,
+} from "../services/apiService";
+import PreviewModal from "../components/PreviewModal";
 
 function HomePage() {
   const config = useConfigStore((state) => ({
@@ -23,10 +29,16 @@ function HomePage() {
     goVersion: state.goVersion,
     dbConfig: state.dbConfig,
   }));
-  const { goVersion } = useConfigStore();
+  const { goVersion, projectName } = useConfigStore();
 
   const [isLoadingDownload, setIsLoadingDownload] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Preview state
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<ProjectPreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDownload = async () => {
     setIsLoadingDownload(true);
@@ -61,8 +73,41 @@ function HomePage() {
     }
   };
 
-  const handlePreview = () => {
-    console.log("Previewing with config:", config);
+  const handleOpenPreview = async () => {
+    setIsLoadingPreview(true);
+    setPreviewError(null);
+    setPreviewData(null);
+    try {
+      if (
+        !config.modulePath ||
+        !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(\/[a-zA-Z0-9_.-]+)*$/.test(
+          config.modulePath
+        )
+      ) {
+        throw new Error(
+          "Invalid Go module path format (e.g., github.com/user/repo)."
+        );
+      }
+      if (!config.framework) {
+        throw new Error("Please select a web framework.");
+      }
+      const data = await getProjectPreview(config);
+      setPreviewData(data);
+      setIsModalOpen(true);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during preview.";
+      setPreviewError(message);
+      setError(message);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setIsModalOpen(false);
   };
 
   return (
@@ -124,7 +169,7 @@ function HomePage() {
             </div>
           </motion.div>
 
-          {/* Right Side: Preview & Actions */}
+          {/* Right Side: Actions (Preview button now opens modal) */}
           <motion.div
             className="space-y-6"
             initial={{ opacity: 0, x: 20 }}
@@ -132,29 +177,63 @@ function HomePage() {
             transition={{ delay: 0.4 }}
           >
             <div className="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-100 dark:border-dark-border overflow-hidden">
-              <div className="p-6 h-full flex flex-col">
-                {/* Code Preview Area */}
-                <div className="flex-grow bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-6 min-h-[300px] border border-gray-100 dark:border-gray-700">
-                  <p className="text-gray-500 dark:text-gray-400 text-center mt-32">
-                    Project structure preview will appear here
+              <div className="p-6 h-full flex flex-col justify-center">
+                <div className="text-center mb-8">
+                  <QuestionMarkCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">
+                    Ready to Generate?
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Configure your project on the left, then preview or
+                    download.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-auto">
                   <motion.button
-                    onClick={handlePreview}
-                    disabled={isLoadingDownload}
+                    id="preview-button"
+                    onClick={handleOpenPreview}
+                    disabled={isLoadingDownload || isLoadingPreview}
                     className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <EyeIcon className="w-5 h-5 mr-2" />
-                    Preview Code
+                    {isLoadingPreview ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="w-5 h-5 mr-2" />
+                        Preview Code
+                      </>
+                    )}
                   </motion.button>
 
                   <motion.button
+                    id="download-button"
                     onClick={handleDownload}
-                    disabled={isLoadingDownload}
+                    disabled={isLoadingDownload || isLoadingPreview}
                     className="flex items-center justify-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -193,16 +272,15 @@ function HomePage() {
                 </div>
 
                 <AnimatePresence>
-                  {error && (
+                  {(error || previewError) && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg"
+                      className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg text-sm text-center"
                       role="alert"
                     >
-                      <p className="font-medium mb-1">Error</p>
-                      <p className="text-sm">{error}</p>
+                      {error || previewError}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -211,6 +289,16 @@ function HomePage() {
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={isModalOpen}
+        onRequestClose={handleClosePreview}
+        previewData={previewData}
+        isLoading={isLoadingPreview}
+        error={previewError}
+        projectName={projectName || config.modulePath?.split("/").pop()}
+      />
     </div>
   );
 }

@@ -1,7 +1,11 @@
 import axios from "axios";
 import { useConfigStore } from "../store/useConfigStore"; // To get the full state shape if needed
 
+
+type DbConfig = Record<string, unknown>;
+
 // Define the expected configuration shape based on Zustand store
+// dbConfig is optional and only sent if database is not 'none'
 type ProjectConfig = Omit<
   ReturnType<typeof useConfigStore.getState>,
   | "setFramework"
@@ -13,7 +17,16 @@ type ProjectConfig = Omit<
   | "toggleThemeMode"
   | "resetConfig"
   | "themeMode"
->;
+> & {
+  dbConfig?: DbConfig;
+};
+
+// Define a type for the payload
+type PayloadType<T> = Omit<T, 'dbConfig'> & {
+  database: string | null;
+  features: string[];
+  dbConfig?: DbConfig;
+};
 
 // Determine API base URL based on environment
 // const API_BASE_URL =
@@ -28,12 +41,37 @@ const apiClient = axios.create({
   },
 });
 
+// Interface for the preview response
+export interface ProjectPreview {
+  structure: string[]; // List of file paths
+  files: Record<string, string>; // Map of file path to content
+}
+
+// Use the non-blob API client
+const authApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  responseType: "json",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export const generateProjectZip = async (
   config: ProjectConfig
 ): Promise<Blob> => {
   try {
     // Make sure features is always an array
-    const payload = { ...config, features: config.features || [] };
+    // Only send dbConfig if database is not 'none'
+    const { database, dbConfig, ...rest } = config;
+
+    const payload: PayloadType<typeof config> = {
+      ...rest,
+      database,
+      features: config.features || [],
+    };
+    if (database && database !== "none") {
+      payload.dbConfig = dbConfig;
+    }
     console.log("Sending payload to /generate:", payload);
 
     const response = await apiClient.post("/generate", payload);
@@ -73,5 +111,43 @@ export const generateProjectZip = async (
       console.error("Unknown API Error:", error);
       throw new Error("An unknown error occurred.");
     }
+  }
+};
+
+export const getProjectPreview = async (
+  config: ProjectConfig
+): Promise<ProjectPreview> => {
+  try {
+    // Only send dbConfig if database is not 'none'
+    const { database, dbConfig, ...rest } = config;
+
+    const payload: PayloadType<typeof config> = {
+      ...rest,
+      database,
+      features: config.features || [],
+    };
+
+    if (database && database !== "none") {
+      payload.dbConfig = dbConfig;
+    }
+    console.log("Sending payload to /preview:", payload);
+    // Use authApiClient or ensure non-blob responseType
+    const response = await authApiClient.post<ProjectPreview>(
+      "/preview",
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("API Error fetching preview:", error.response.data);
+      throw new Error(
+        error.response.data?.message || "Failed to fetch project preview."
+      );
+    } else if (error instanceof Error) {
+      console.error("API Error:", error);
+      throw error;
+    }
+    console.error("Unknown API Error fetching preview:", error);
+    throw new Error("An unknown error occurred while fetching the preview.");
   }
 };
