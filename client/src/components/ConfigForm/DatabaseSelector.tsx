@@ -46,7 +46,7 @@ function DatabaseSelector() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" id="database-selector">
       <div className="flex items-center gap-2">
         <CubeIcon className="w-5 h-5 text-primary-500" />
         <label className="block text-base font-medium text-gray-900 dark:text-white">

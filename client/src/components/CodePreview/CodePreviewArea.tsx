@@ -147,7 +147,7 @@ function CodePreviewArea({
 
   return (
     <motion.div
-      id="code-preview-container"
+      id="code-preview-area"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="flex h-full w-full rounded-lg overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-dark-bg dark:via-dark-card dark:to-gray-900"
