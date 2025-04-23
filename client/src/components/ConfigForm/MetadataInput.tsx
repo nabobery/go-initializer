@@ -22,7 +22,7 @@ function MetadataInput() {
     /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(\/[a-zA-Z0-9_.-]+)*$/.test(modulePath);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" id="metadata-input-group">
       <div className="flex items-center justify-between">
         <label
           htmlFor="module-path"

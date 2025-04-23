@@ -25,7 +25,7 @@ require (
 	<%# Optional Feature dependencies %>
 	<% if (options.includes('logrus')) { %>github.com/sirupsen/logrus v1.9.3<% } %>
 	<% if (options.includes('zap')) { %>go.uber.org/zap v1.27.0<% } %>
-	<% if (options.includes('testify')) { %>github.com/stretchr/testify v1.9.0<% } %> // Often used for testing regardless
+	<% if (options.includes('testify')) { %>github.com/stretchr/testify v1.9.0<% } %>
 
 	<% if (includeIndirectDeps) { %>
 	<%# Indirect dependencies might be needed - 'go mod tidy' handles this %>

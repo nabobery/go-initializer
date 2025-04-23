@@ -123,6 +123,9 @@ export const useConfigStore = create<ConfigState>()(
               uri: `mongodb://localhost:27017/${projectName}_dev`,
             };
             break;
+          case "none":
+            defaultDbConfig = initialDbConfig;
+            break;
           default:
             defaultDbConfig = {
               host: "localhost",

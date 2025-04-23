@@ -4,6 +4,7 @@ const ejs = require("ejs");
 const archiver = require("archiver");
 const os = require("os");
 const logger = require("../utils/logger");
+const glob = require("glob");
 
 const generateProjectFiles = async (options) => {
   const {
@@ -17,7 +18,9 @@ const generateProjectFiles = async (options) => {
   } = options;
   const tempDir = path.join(
     os.tmpdir(),
-    `go-init-${projectName}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    `go-init-${projectName}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`
   );
 
   try {
@@ -71,12 +74,12 @@ const generateProjectFiles = async (options) => {
       },
 
       // Database setup
-      {
-        template: ["sqlite", "postgres", "mysql"].includes(database)
-          ? "database/gorm_setup.go.ejs"
-          : "database/mongo_setup.go.ejs",
-        output: path.join(tempDir, "internal", "config", "db.go"),
-      },
+      // {
+      //   template: ["sqlite", "postgres", "mysql"].includes(database)
+      //     ? "database/gorm_setup.go.ejs"
+      //     : "database/mongo_setup.go.ejs",
+      //   output: path.join(tempDir, "internal", "config", "db.go"),
+      // },
 
       // Config struct
       {
@@ -90,6 +93,18 @@ const generateProjectFiles = async (options) => {
         output: path.join(tempDir, "configs", ".env.example"),
       },
     ];
+
+    if (["sqlite", "postgres", "mysql"].includes(database)) {
+      filesToGenerate.push({
+        template: "database/gorm_setup.go.ejs",
+        output: path.join(tempDir, "internal", "config", "db.go"),
+      });
+    } else if (database === "mongodb") {
+      filesToGenerate.push({
+        template: "database/mongo_setup.go.ejs",
+        output: path.join(tempDir, "internal", "config", "db.go"),
+      });
+    }
 
     for (const file of filesToGenerate) {
       if (file.template) {
@@ -150,7 +165,54 @@ const zipDirectory = (sourceDir, outPath) => {
   });
 };
 
+/**
+ * Reads the generated project directory and returns its file structure and file contents for preview.
+ * Skips large or binary files. Used for preview endpoint.
+ * @param {string} projectDir - Path to the generated project directory
+ * @returns {Promise<{structure: string[], files: Object}>}
+ */
+const readProjectFiles = async (projectDir) => {
+  const structure = [];
+  const files = {};
+  // Use glob to find all files, ignoring node_modules etc. if they existed
+  const filePaths = glob.sync("**/*", {
+    cwd: projectDir,
+    nodir: true,
+    dot: true,
+  });
+
+  for (const filePath of filePaths) {
+    // Normalize path separators for consistency
+    const relativePath = filePath.replace(/\\/g, "/");
+    structure.push(relativePath);
+    try {
+      // Read only reasonably sized text files for preview
+      const fullPath = path.join(projectDir, filePath);
+      const stats = await fs.stat(fullPath);
+      if (stats.size < 500 * 1024) {
+        // Limit file size (e.g., 500KB)
+        const content = await fs.readFile(fullPath, "utf-8");
+        // Basic check for binary files (can be improved)
+        if (content.includes("\uFFFD")) {
+          files[relativePath] = "<Binary File - Not Shown>";
+        } else {
+          files[relativePath] = content;
+        }
+      } else {
+        files[relativePath] = `<File too large (${(stats.size / 1024).toFixed(
+          1
+        )}KB) - Not Shown>`;
+      }
+    } catch (readError) {
+      logger.error(`Error reading file ${filePath} for preview: ${readError}`);
+      files[filePath] = `<Error Reading File: ${readError.message}>`;
+    }
+  }
+  return { structure, files };
+};
+
 module.exports = {
   generateProjectFiles,
   zipDirectory,
+  readProjectFiles,
 };
