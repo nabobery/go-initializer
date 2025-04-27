@@ -65,3 +65,41 @@ This project follows the [Standard Go Project Layout](https://github.com/golang-
 
 ```bash
 go run cmd/<%= projectName %>/main.go
+```
+
+## Testing
+
+<% if (options.includes('testify')) { %>
+This project includes the [Testify](https://github.com/stretchr/testify) toolkit. Use its packages (`assert`, `require`, `mock`, `suite`) in your `_test.go` files for effective testing.
+
+Example:
+```go
+import (
+  "testing"
+  "github.com/stretchr/testify/assert"
+)
+
+func TestSomething(t *testing.T) {
+  assert.Equal(t, 123, 123)
+}
+<% } else { %>
+Place your test files (`_test.go`) alongside the code they test.
+<% } %>
+Run tests using:
+```bash
+go test ./...
+```
+Run tests with coverage:
+```bash
+go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+```
+
+## Logging
+
+<% if (options.includes('logrus')) { %>
+This project uses [Logrus](https://github.com/sirupsen/logrus) for structured logging. You can use `log.Info`, `log.Warn`, `log.Error`, etc., throughout your code.
+<% } else if (options.includes('zap')) { %>
+This project uses [Zap](https://github.com/uber-go/zap) for high-performance structured logging. Use the `sugar` logger for convenient logging, e.g., `sugar.Info("message")`.
+<% } else { %>
+This project uses the standard Go logger (`log` package).
+<% } %>

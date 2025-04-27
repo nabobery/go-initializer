@@ -94,6 +94,14 @@ const generateProjectFiles = async (options) => {
       },
     ];
 
+    // Add example test file if Testify is selected
+    if ((features || []).includes("testify")) {
+      filesToGenerate.push({
+        template: "structure/example_test.go.ejs",
+        output: path.join(tempDir, "internal", "handlers", "example_test.go"),
+      });
+    }
+
     if (["sqlite", "postgres", "mysql"].includes(database)) {
       filesToGenerate.push({
         template: "database/gorm_setup.go.ejs",

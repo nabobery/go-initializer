@@ -1,0 +1,14 @@
+<% if (options.includes('testify')) { %>
+    package handlers
+    
+    import (
+        "testing"
+        "github.com/stretchr/testify/assert"
+    )
+    
+    func TestHelloWorld(t *testing.T) {
+        got := 2 + 2
+        want := 4
+        assert.Equal(t, want, got, "they should be equal")
+    }
+<% } %>
