@@ -1,12 +1,11 @@
 import axios from "axios";
 import { useConfigStore } from "../store/useConfigStore"; // To get the full state shape if needed
 
-
 type DbConfig = Record<string, unknown>;
 
 // Define the expected configuration shape based on Zustand store
 // dbConfig is optional and only sent if database is not 'none'
-type ProjectConfig = Omit<
+export type ProjectConfig = Omit<
   ReturnType<typeof useConfigStore.getState>,
   | "setFramework"
   | "setDatabase"
@@ -22,7 +21,7 @@ type ProjectConfig = Omit<
 };
 
 // Define a type for the payload
-type PayloadType<T> = Omit<T, 'dbConfig'> & {
+type PayloadType<T> = Omit<T, "dbConfig"> & {
   database: string | null;
   features: string[];
   dbConfig?: DbConfig;
