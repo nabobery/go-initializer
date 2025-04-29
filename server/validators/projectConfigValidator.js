@@ -10,10 +10,21 @@ const dbConfigSchema = Joi.object({
 });
 
 const projectConfigSchema = Joi.object({
-  modulePath: Joi.string().required(),
-  projectName: Joi.string().optional(),
-  framework: Joi.string().required(),
-  goVersion: Joi.string().optional(),
+  modulePath: Joi.string()
+    .pattern(/^([a-zA-Z0-9_-]+\.?)+(\/[a-zA-Z0-9_-]+)+$/)
+    .message("Invalid Go module path format")
+    .required(),
+  projectName: Joi.string()
+    .pattern(/^[a-zA-Z0-9_-]+$/)
+    .message(
+      "Project name can only contain alphanumeric characters, underscores, and hyphens"
+    )
+    .optional(),
+  framework: Joi.string().valid("gin", "echo", "chi").required(),
+  goVersion: Joi.string()
+    .pattern(/^1\.\d+(\.\d+)?$/)
+    .message("Invalid Go version format (e.g., 1.22 or 1.22.4)")
+    .optional(),
   database: Joi.string()
     .valid("mongodb", "sqlite", "postgres", "mysql", "none")
     .optional(),

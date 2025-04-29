@@ -1,5 +1,5 @@
-const express = require('express');
-const { generateProject } = require('../controllers/generateController');
+const express = require("express");
+const { generateProject } = require("../controllers/generateController");
 const router = express.Router();
 
 /**
@@ -22,7 +22,8 @@ const router = express.Router();
  *                 description: Name of the Go project (defaults to last segment of modulePath)
  *               framework:
  *                 type: string
- *                 description: Web framework (e.g., gin, echo)
+ *                 description: Web framework (e.g., gin, echo, chi)
+ *                 enum: [gin, echo, chi]
  *               goVersion:
  *                 type: string
  *                 description: Go version (default 1.22)
@@ -63,6 +64,6 @@ const router = express.Router();
  *         description: Server error
  */
 
-router.post('/', generateProject);
+router.post("/", generateProject);
 
 module.exports = router;
