@@ -1,0 +1,134 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log" // Using standard log initially, replace with Logrus/Zap if selected
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"<%= modulePath %>/internal/config"
+	"<%= modulePath %>/internal/handlers"
+	<% if (database === 'mongodb') { %>"<%= modulePath %>/internal/database/mongo"<% } %>
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>"<%= modulePath %>/internal/database/gorm"<% } %>
+
+	"github.com/gin-gonic/gin"
+	<% if (options.includes('logrus')) { %>log "github.com/sirupsen/logrus" // Override standard log<% } %>
+	<% if (options.includes('zap')) { %>"go.uber.org/zap" // Use zap logger<% } %>
+)
+
+func main() {
+	// Load Configuration
+	cfg, err := config.LoadConfig("./configs") // Load from ./configs folder
+	if err != nil {
+		<% if (options.includes('zap')) { %>
+		// If zap is selected, setup a basic logger for startup errors
+		basicLogger, _ := zap.NewProduction()
+		basicLogger.Fatal("cannot load config:", zap.Error(err))
+		<% } else { %>
+		log.Fatalf("cannot load config: %v", err)
+		<% } %>
+	}
+
+	// --- Logger Setup ---
+	<% if (options.includes('logrus')) { %>
+	// Configure Logrus (example: JSON formatter, Debug level)
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel) // Adjust level based on config (cfg.LogLevel)
+	log.Info("Logrus logger initialized")
+	<% } %>
+	<% if (options.includes('zap')) { %>
+	// Configure Zap (example: Production config, could customize further)
+	// Adjust level based on config (cfg.LogLevel)
+	logger, _ := zap.NewProduction() // Or zap.NewDevelopment()
+	defer logger.Sync() // Flushes buffer, if any
+	sugar := logger.Sugar()
+	sugar.Info("Zap logger initialized")
+	// Use 'sugar' for logging throughout the application, e.g., sugar.Infow(...)
+	<% } %>
+
+	// --- Database Connection ---
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+	db, err := gormdb.Connect(&cfg.Database)
+	if err != nil {
+		<% if (options.includes('zap')) { %>sugar.Fatalw("failed to connect to database", "error", err)<% } else { %>log.Fatalf("failed to connect to database: %v", err)<% } %>
+	}
+	<% if (options.includes('zap')) { %>sugar.Info("Database connected successfully")<% } else { %>log.Println("Database connected successfully")<% } %>
+	// AutoMigrate models here if needed: db.AutoMigrate(&models.YourModel{})
+	<% } %>
+	<% if (database === 'mongodb') { %>
+	mongoClient, err := mongodb.Connect(&cfg.Mongo)
+	if err != nil {
+		<% if (options.includes('zap')) { %>sugar.Fatalw("failed to connect to mongodb", "error", err)<% } else { %>log.Fatalf("failed to connect to mongodb: %v", err)<% } %>
+	}
+	defer func() {
+		if err = mongoClient.Disconnect(context.Background()); err != nil {
+			<% if (options.includes('zap')) { %>sugar.Errorw("error disconnecting mongodb", "error", err)<% } else { %>log.Printf("error disconnecting mongodb: %v\n", err)<% } %>
+		}
+		<% if (options.includes('zap')) { %>sugar.Info("MongoDB connection closed")<% } else { %>log.Println("MongoDB connection closed")<% } %>
+	}()
+	mongoCollection := mongoClient.Database(cfg.Mongo.Name).Collection("your_collection_name") // Example collection
+	<% if (options.includes('zap')) { %>sugar.Info("MongoDB connected successfully")<% } else { %>log.Println("MongoDB connected successfully")<% } %>
+	<% } %>
+
+	// --- Gin Setup ---
+	// gin.SetMode(gin.ReleaseMode) // Set based on config (e.g., cfg.Server.Mode)
+	router := gin.Default() // Includes Logger and Recovery middleware
+
+	// --- Middleware (Example: CORS) ---
+	// router.Use(cors.Default()) // Add import "github.com/gin-contrib/cors"
+
+	// --- Routes ---
+	// Simple health check / hello world
+	// Pass dependencies (config, logger, db) to handlers
+	helloHandler := handlers.NewHelloHandler(cfg <% if (options.includes('zap')) { %>, sugar<% } %> <% if (database !== 'none') { %>, db<% } %> <% if (database === 'mongodb') { %>, mongoCollection<% } %>)
+	router.GET("/", helloHandler.HelloWorld)
+
+	// Add more routes and route groups here
+	// apiV1 := router.Group("/api/v1")
+	// {
+	// 	// Example: itemHandler := handlers.NewItemHandler(db, logger)
+	//  // apiV1.GET("/items", itemHandler.GetItems)
+	// 	// apiV1.POST("/items", itemHandler.CreateItem)
+	// }
+
+
+	// --- Start Server ---
+	serverPort := fmt.Sprintf(":%d", cfg.Server.Port)
+	srv := &http.Server{
+		Addr:    serverPort,
+		Handler: router,
+		// Add other server config like timeouts: ReadTimeout, WriteTimeout, IdleTimeout
+	}
+
+	go func() {
+		// Service connections
+		<% if (options.includes('zap')) { %>sugar.Infof("Server listening on port %s", serverPort)<% } else { %>log.Printf("Server listening on port %s\n", serverPort)<% } %>
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			<% if (options.includes('zap')) { %>sugar.Fatalw("listen error", "error", err)<% } else { %>log.Fatalf("listen: %s\n", err)<% } %>
+		}
+	}()
+
+	// --- Graceful Shutdown ---
+	quit := make(chan os.Signal, 1)
+	// kill (no param) default send syscall.SIGTERM
+	// kill -2 is syscall.SIGINT
+	// kill -9 is syscall.SIGKILL but can't be caught, so don't need it
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	<% if (options.includes('zap')) { %>sugar.Info("Shutting down server...")<% } else { %>log.Println("Shutting down server...")<% } %>
+
+	// The context is used to inform the server it has 5 seconds to finish
+	// the requests it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		<% if (options.includes('zap')) { %>sugar.Fatalw("Server forced to shutdown:", "error", err)<% } else { %>log.Fatal("Server forced to shutdown:", err)<% } %>
+	}
+
+	<% if (options.includes('zap')) { %>sugar.Info("Server exiting")<% } else { %>log.Println("Server exiting")<% } %>
+}

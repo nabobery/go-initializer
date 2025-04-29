@@ -1,0 +1,103 @@
+package handlers
+
+import (
+	"net/http"
+
+	"<%= modulePath %>/internal/config"
+	<% if (database === 'mongodb') { %>"go.mongodb.org/mongo-driver/mongo"<% } %>
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>"gorm.io/gorm"<% } %>
+	<% if (framework === 'gin') { %>"github.com/gin-gonic/gin"<% } %>
+	<% if (framework === 'echo') { %>"github.com/labstack/echo/v4"<% } %>
+	<% if (options.includes('zap')) { %>"go.uber.org/zap"<% } %>
+)
+
+// HelloHandler holds dependencies for hello world handlers
+type HelloHandler struct {
+	Config *config.Config
+	<% if (options.includes('zap')) { %>Logger *zap.SugaredLogger<% } %>
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>DB     *gorm.DB<% } %>
+	<% if (database === 'mongodb') { %>MongoCollection *mongo.Collection // Example: Pass a specific collection<% } %>
+	// Add other dependencies like services, repositories if needed
+}
+
+// NewHelloHandler creates a new HelloHandler instance
+func NewHelloHandler(
+	cfg *config.Config,
+	<% if (options.includes('zap')) { %>logger *zap.SugaredLogger,<% } %>
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>db *gorm.DB,<% } %>
+	<% if (database === 'mongodb') { %>mongoCollection *mongo.Collection,<% } %>
+) *HelloHandler {
+	return &HelloHandler{
+		Config: cfg,
+		<% if (options.includes('zap')) { %>Logger: logger,<% } %>
+		<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>DB:     db,<% } %>
+		<% if (database === 'mongodb') { %>MongoCollection: mongoCollection,<% } %>
+	}
+}
+
+<%# --- Gin Handler --- %>
+<% if (framework === 'gin') { %>
+// HelloWorld is a simple handler for Gin
+func (h *HelloHandler) HelloWorld(c *gin.Context) {
+	<% if (options.includes('zap')) { %>h.Logger.Info("HelloWorld handler invoked (Gin)")<% } %>
+
+	// Example: Access config
+	// appName := h.Config.App.Name
+
+	// Example: Access DB (GORM)
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+	// var count int64
+	// h.DB.Model(&YourModel{}).Count(&count)
+	// h.Logger.Infof("Example DB interaction: Found %d records.", count)
+	<% } %>
+
+	// Example: Access DB (Mongo)
+	<% if (database === 'mongodb') { %>
+	// count, err := h.MongoCollection.CountDocuments(c.Request.Context(), bson.M{})
+	// if err != nil { h.Logger.Errorw("Failed to count documents", "error", err) }
+	// h.Logger.Infof("Example DB interaction: Found %d documents.", count)
+	<% } %>
+
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Hello, World!",
+		"framework": "<%= framework %>",
+		"database": "<%= database %>",
+		"features": "<%= options.join(', ') %>",
+		// "appName": appName,
+	})
+}
+<% } %>
+
+<%# --- Echo Handler --- %>
+<% if (framework === 'echo') { %>
+// HelloWorldEcho is a simple handler for Echo
+func (h *HelloHandler) HelloWorldEcho(c echo.Context) error {
+	<% if (options.includes('zap')) { %>h.Logger.Info("HelloWorld handler invoked (Echo)")<% } %>
+
+	// Example: Access config
+	// appName := h.Config.App.Name
+
+	// Example: Access DB (GORM)
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+	// var count int64
+	// h.DB.Model(&YourModel{}).Count(&count)
+	// h.Logger.Infof("Example DB interaction: Found %d records.", count)
+	<% } %>
+
+	// Example: Access DB (Mongo)
+	<% if (database === 'mongodb') { %>
+	// count, err := h.MongoCollection.CountDocuments(c.Request().Context(), bson.M{})
+	// if err != nil { h.Logger.Errorw("Failed to count documents", "error", err) }
+	// h.Logger.Infof("Example DB interaction: Found %d documents.", count)
+	<% } %>
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Hello, World!",
+		"framework": "<%= framework %>",
+		"database": "<%= database %>",
+		"features": "<%= options.join(', ') %>",
+		// "appName": appName,
+	})
+}
+<% } %>
