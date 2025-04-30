@@ -13,7 +13,7 @@ interface DbConfig {
 
 interface ConfigState {
   // Go Project Config
-  framework: "gin" | "echo" | "";
+  framework: "gin" | "echo" | "chi" | "";
   database: "postgres" | "mysql" | "sqlite" | "mongodb" | "none" | "";
   features: ("logrus" | "zap" | "testify")[];
   modulePath: string;
@@ -25,7 +25,7 @@ interface ConfigState {
   themeMode: "light" | "dark";
 
   // Actions
-  setFramework: (framework: "gin" | "echo") => void;
+  setFramework: (framework: "gin" | "echo" | "chi") => void;
   setDatabase: (
     database: "postgres" | "mysql" | "sqlite" | "mongodb" | "none" | ""
   ) => void;

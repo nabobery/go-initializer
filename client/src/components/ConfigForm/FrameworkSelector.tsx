@@ -34,6 +34,17 @@ function FrameworkSelector() {
         "Static files",
       ],
     },
+    {
+      value: "chi",
+      label: "Chi",
+      description: "Lightweight, idiomatic and composable router for Go HTTP services",
+      features: [
+        "Standard library compatible",
+        "Context control",
+        "Extensive middleware collection",
+        "Graceful shutdown",
+      ],
+    },
   ];
 
   return (
