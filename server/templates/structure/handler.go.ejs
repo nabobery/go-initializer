@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json" // Needed for Chi handler
 	"net/http"
 
 	"<%= modulePath %>/internal/config"
@@ -8,7 +9,9 @@ import (
 	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>"gorm.io/gorm"<% } %>
 	<% if (framework === 'gin') { %>"github.com/gin-gonic/gin"<% } %>
 	<% if (framework === 'echo') { %>"github.com/labstack/echo/v4"<% } %>
+	<%# No direct chi import needed here unless using specific chi context utils %>
 	<% if (options.includes('zap')) { %>"go.uber.org/zap"<% } %>
+	// Add other necessary imports like "context", "fmt", "time" etc. if needed for logic
 )
 
 // HelloHandler holds dependencies for hello world handlers
@@ -27,6 +30,12 @@ func NewHelloHandler(
 	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>db *gorm.DB,<% } %>
 	<% if (database === 'mongodb') { %>mongoCollection *mongo.Collection,<% } %>
 ) *HelloHandler {
+	// Determine the type of db connection based on the database chosen
+	<% let dbArg = "nil" %>
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { dbArg = "db" } %>
+	<% let mongoArg = "nil" %>
+	<% if (database === 'mongodb') { mongoArg = "mongoCollection" } %>
+
 	return &HelloHandler{
 		Config: cfg,
 		<% if (options.includes('zap')) { %>Logger: logger,<% } %>
@@ -34,6 +43,7 @@ func NewHelloHandler(
 		<% if (database === 'mongodb') { %>MongoCollection: mongoCollection,<% } %>
 	}
 }
+
 
 <%# --- Gin Handler --- %>
 <% if (framework === 'gin') { %>
@@ -99,5 +109,53 @@ func (h *HelloHandler) HelloWorldEcho(c echo.Context) error {
 		"features": "<%= options.join(', ') %>",
 		// "appName": appName,
 	})
+}
+<% } %>
+
+<%# --- Chi Handler --- %>
+<% if (framework === 'chi') { %>
+// HelloWorldChi is a simple handler for Chi (standard http.HandlerFunc)
+func (h *HelloHandler) HelloWorldChi(w http.ResponseWriter, r *http.Request) {
+	<% if (options.includes('zap')) { %>h.Logger.Info("HelloWorld handler invoked (Chi)")<% } %>
+
+	// Example: Access config
+	// appName := h.Config.App.Name
+
+	// Example: Access DB (GORM)
+	<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
+	// var count int64
+	// h.DB.Model(&YourModel{}).Count(&count)
+	// h.Logger.Infof("Example DB interaction: Found %d records.", count)
+	<% } %>
+
+	// Example: Access DB (Mongo)
+	<% if (database === 'mongodb') { %>
+	// count, err := h.MongoCollection.CountDocuments(r.Context(), bson.M{}) // Use r.Context()
+	// if err != nil { h.Logger.Errorw("Failed to count documents", "error", err) }
+	// h.Logger.Infof("Example DB interaction: Found %d documents.", count)
+	<% } %>
+
+	// Prepare response data
+	responseData := map[string]interface{}{
+		"message": "Hello, World!",
+		"framework": "<%= framework %>",
+		"database": "<%= database %>",
+		"features": "<%= options.join(', ') %>",
+		// "appName": appName,
+	}
+
+	// Set content type and write response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(w).Encode(responseData)
+	if err != nil {
+		// Log error if response writing fails
+		<% if (options.includes('zap')) { %>
+		h.Logger.Errorw("Failed to write JSON response", "error", err)
+		<% } else { %>
+		// Use standard log or logrus if zap is not available
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		<% } %>
+	}
 }
 <% } %>
