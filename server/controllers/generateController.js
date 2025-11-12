@@ -8,6 +8,7 @@ const {
   generateProjectFiles,
   zipDirectory,
 } = require("../services/generationService");
+const versionService = require("../services/versionService");
 const logger = require("../utils/logger");
 
 const generateProject = async (req, res) => {
@@ -26,12 +27,65 @@ const generateProject = async (req, res) => {
   // Derive projectName from modulePath if not provided
   options.projectName =
     options.projectName || options.modulePath.split("/").pop() || "my-go-app";
-  options.goVersion = options.goVersion || "1.22"; // Default or fetch latest
+
+  // Set default versions using version service
+  options.goVersion = options.goVersion || versionService.getDefaultGoVersion();
+
+  if (options.framework) {
+    options.frameworkVersion =
+      options.frameworkVersion ||
+      versionService.getDefaultFrameworkVersion(options.framework);
+  }
 
   // Set default database if not provided
   if (!options.database) {
-    // options.database = "mongodb";
     options.database = "none";
+  }
+
+  // Set database versions
+  if (options.database && options.database !== "none") {
+    // Set GORM version for SQL databases
+    if (["postgres", "mysql", "sqlite"].includes(options.database)) {
+      options.gormVersion =
+        options.gormVersion ||
+        versionService.getDefaultDatabaseVersion("gorm");
+    }
+
+    // Set database driver version
+    options.databaseVersion =
+      options.databaseVersion ||
+      versionService.getDefaultDatabaseVersion(options.database);
+  }
+
+  // Set feature versions
+  if (options.features && Array.isArray(options.features)) {
+    options.features.forEach((feature) => {
+      const versionKey = `${feature}Version`;
+      if (!options[versionKey]) {
+        options[versionKey] = versionService.getDefaultFeatureVersion(feature);
+      }
+    });
+  }
+
+  // Set default viper version (always included)
+  options.viperVersion =
+    options.viperVersion ||
+    versionService.getDefaultFeatureVersion("viper");
+
+  // Validate configuration for version compatibility
+  const validation = versionService.validateConfiguration(options);
+  if (!validation.valid) {
+    logger.warn("Version compatibility validation failed:", validation.errors);
+    return res.status(400).json({
+      message: "Version compatibility issues detected",
+      errors: validation.errors,
+      warnings: validation.warnings,
+    });
+  }
+
+  // Log warnings if any
+  if (validation.warnings.length > 0) {
+    logger.warn("Version compatibility warnings:", validation.warnings);
   }
 
   let tempDir = null; // Keep track of the temp directory path for generated files

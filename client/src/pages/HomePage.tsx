@@ -11,6 +11,8 @@ import FrameworkSelector from "../components/ConfigForm/FrameworkSelector";
 import DatabaseSelector from "../components/ConfigForm/DatabaseSelector";
 import FeatureSelector from "../components/ConfigForm/FeatureSelector";
 import MetadataInput from "../components/ConfigForm/MetadataInput";
+import GoVersionSelector from "../components/ConfigForm/GoVersionSelector";
+import FrameworkVersionSelector from "../components/ConfigForm/FrameworkVersionSelector";
 import { useConfigStore } from "../store/useConfigStore";
 import {
   generateProjectZip,
@@ -30,6 +32,13 @@ function HomePage() {
     modulePath: state.modulePath,
     projectName: state.projectName,
     goVersion: state.goVersion,
+    frameworkVersion: state.frameworkVersion,
+    databaseVersion: state.databaseVersion,
+    gormVersion: state.gormVersion,
+    logrusVersion: state.logrusVersion,
+    zapVersion: state.zapVersion,
+    testifyVersion: state.testifyVersion,
+    viperVersion: state.viperVersion,
     dbConfig: state.dbConfig as DbConfig,
   }));
   const { goVersion, projectName } = useConfigStore();
@@ -181,7 +190,10 @@ function HomePage() {
               <div className="p-6 space-y-6">
                 <MetadataInput />
                 <hr className="border-gray-100 dark:border-dark-border" />
+                <GoVersionSelector />
+                <hr className="border-gray-100 dark:border-dark-border" />
                 <FrameworkSelector />
+                <FrameworkVersionSelector />
                 <hr className="border-gray-100 dark:border-dark-border" />
                 <DatabaseSelector />
                 <hr className="border-gray-100 dark:border-dark-border" />

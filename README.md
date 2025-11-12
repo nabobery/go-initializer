@@ -6,10 +6,13 @@ go-initializer is a project inspired by Spring Initializer, designed to help you
 
 ## Features
 
-- Generate Go project boilerplate for popular frameworks (e.g., Gin, Echo)
-- Optional database and feature selection
+- Generate Go project boilerplate for popular frameworks (Gin, Echo, Chi)
+- **Version Selection**: Choose specific versions for Go, frameworks, and dependencies
+- **Compatibility Validation**: Automatic validation of version compatibility
+- Optional database and feature selection (PostgreSQL, MySQL, SQLite, MongoDB)
 - Clean, idiomatic Go folder structure
 - Downloadable as a ready-to-use zip file
+- Real-time project preview
 
 ## Getting Started
 

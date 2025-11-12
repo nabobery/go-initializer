@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware"; // Optional: to persist state
+import { getAllVersions, VersionsResponse } from "../services/apiService";
 
 // Define the structure for dbConfig based on backend schema
 interface DbConfig {
@@ -18,8 +19,20 @@ interface ConfigState {
   features: ("logrus" | "zap" | "testify")[];
   modulePath: string;
   projectName: string;
-  goVersion: string; // Display only for now
+  goVersion: string;
+  frameworkVersion: string;
+  databaseVersion: string;
+  gormVersion: string;
+  logrusVersion: string;
+  zapVersion: string;
+  testifyVersion: string;
+  viperVersion: string;
   dbConfig: DbConfig;
+
+  // Available versions from backend
+  availableVersions: VersionsResponse | null;
+  versionsLoading: boolean;
+  versionsError: string | null;
 
   // UI State
   themeMode: "light" | "dark";
@@ -33,8 +46,14 @@ interface ConfigState {
   setModulePath: (path: string) => void;
   setProjectName: (name: string) => void;
   setDbConfig: (config: Partial<DbConfig>) => void;
+  setGoVersion: (version: string) => void;
+  setFrameworkVersion: (version: string) => void;
+  setDatabaseVersion: (version: string) => void;
+  setGormVersion: (version: string) => void;
+  setFeatureVersion: (feature: string, version: string) => void;
   toggleThemeMode: () => void;
   resetConfig: () => void;
+  fetchVersions: () => Promise<void>;
 }
 
 // Define initial state for dbConfig
@@ -56,8 +75,14 @@ type InitialStateType = Omit<
   | "setModulePath"
   | "setProjectName"
   | "setDbConfig"
+  | "setGoVersion"
+  | "setFrameworkVersion"
+  | "setDatabaseVersion"
+  | "setGormVersion"
+  | "setFeatureVersion"
   | "toggleThemeMode"
   | "resetConfig"
+  | "fetchVersions"
 >;
 
 // Explicitly type initialState
@@ -67,8 +92,18 @@ const initialState: InitialStateType = {
   features: [],
   modulePath: "github.com/your-username/your-project",
   projectName: "your-project",
-  goVersion: "1.24.1", // Hardcoded for now, fetch dynamically later if needed
+  goVersion: "1.24.1",
+  frameworkVersion: "",
+  databaseVersion: "",
+  gormVersion: "",
+  logrusVersion: "",
+  zapVersion: "",
+  testifyVersion: "",
+  viperVersion: "",
   dbConfig: initialDbConfig,
+  availableVersions: null,
+  versionsLoading: false,
+  versionsError: null,
   themeMode: "light",
 };
 
@@ -77,10 +112,29 @@ export const useConfigStore = create<ConfigState>()(
   persist(
     (set, get) => ({
       ...initialState, // Now initialState has explicit, precise types
-      setFramework: (framework) => set({ framework }),
+      setFramework: (framework) => {
+        const state = get();
+        const newFrameworkVersion =
+          state.availableVersions?.frameworks[framework]?.default || "";
+        set({ framework, frameworkVersion: newFrameworkVersion });
+      },
       setDatabase: (database) => {
-        const projectName = get().projectName;
+        const state = get();
+        const projectName = state.projectName;
         let defaultDbConfig;
+        let newDatabaseVersion = "";
+        let newGormVersion = "";
+
+        // Set database version from available versions
+        if (state.availableVersions && database && database !== "none") {
+          newDatabaseVersion =
+            state.availableVersions.databases[database]?.default || "";
+          if (["postgres", "mysql", "sqlite"].includes(database)) {
+            newGormVersion =
+              state.availableVersions.databases.gorm?.default || "";
+          }
+        }
+
         switch (database) {
           case "postgres":
             defaultDbConfig = {
@@ -136,7 +190,12 @@ export const useConfigStore = create<ConfigState>()(
               uri: "",
             };
         }
-        set({ database, dbConfig: defaultDbConfig });
+        set({
+          database,
+          dbConfig: defaultDbConfig,
+          databaseVersion: newDatabaseVersion,
+          gormVersion: newGormVersion,
+        });
       },
       toggleFeature: (feature) =>
         set((state) => ({
@@ -152,6 +211,14 @@ export const useConfigStore = create<ConfigState>()(
       setProjectName: (projectName) => set({ projectName }),
       setDbConfig: (configUpdate) =>
         set((state) => ({ dbConfig: { ...state.dbConfig, ...configUpdate } })),
+      setGoVersion: (goVersion) => set({ goVersion }),
+      setFrameworkVersion: (frameworkVersion) => set({ frameworkVersion }),
+      setDatabaseVersion: (databaseVersion) => set({ databaseVersion }),
+      setGormVersion: (gormVersion) => set({ gormVersion }),
+      setFeatureVersion: (feature, version) => {
+        const versionKey = `${feature}Version` as keyof ConfigState;
+        set({ [versionKey]: version } as Partial<ConfigState>);
+      },
       toggleThemeMode: () =>
         set((state) => ({
           themeMode: state.themeMode === "light" ? "dark" : "light",
@@ -160,8 +227,29 @@ export const useConfigStore = create<ConfigState>()(
         set({
           ...initialState,
           themeMode: get().themeMode,
+          availableVersions: get().availableVersions,
           dbConfig: initialDbConfig,
         }),
+      fetchVersions: async () => {
+        set({ versionsLoading: true, versionsError: null });
+        try {
+          const versions = await getAllVersions();
+          set({
+            availableVersions: versions,
+            versionsLoading: false,
+            goVersion: versions.go.default,
+            frameworkVersion: versions.frameworks.gin?.default || "",
+            viperVersion: versions.features.viper?.default || "",
+          });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to load versions";
+          set({
+            versionsError: errorMessage,
+            versionsLoading: false,
+          });
+        }
+      },
     }),
     {
       name: "go-initializer-storage", // name of item in storage

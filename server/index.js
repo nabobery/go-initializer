@@ -10,6 +10,7 @@ const swaggerUi = require("swagger-ui-express");
 const logger = require("./utils/logger");
 const generateRoutes = require("./routes/generate");
 const previewRoutes = require("./routes/preview");
+const versionsRoutes = require("./routes/versions");
 
 // Connect to Database
 // connectDB();
@@ -72,6 +73,7 @@ app.get("/api-docs.json", (req, res) => {
 // --- API Routes ---
 app.use("/api/generate", generateRoutes);
 app.use("/api/preview", previewRoutes);
+app.use("/api/versions", versionsRoutes);
 // Add other routes here later (auth, preview)
 
 // --- Basic Error Handling Middleware (Example) ---

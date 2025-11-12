@@ -46,6 +46,47 @@ export interface ProjectPreview {
   files: Record<string, string>; // Map of file path to content
 }
 
+// Interface for version information
+export interface VersionInfo {
+  version: string;
+  label: string;
+  releaseDate: string;
+  isRecommended: boolean;
+  minGoVersion?: string;
+  compatibleGormVersions?: string[];
+}
+
+export interface VersionsResponse {
+  go: {
+    versions: VersionInfo[];
+    default: string;
+  };
+  frameworks: {
+    [key: string]: {
+      versions: VersionInfo[];
+      default: string;
+    };
+  };
+  databases: {
+    [key: string]: {
+      versions: VersionInfo[];
+      default: string;
+    };
+  };
+  features: {
+    [key: string]: {
+      versions: VersionInfo[];
+      default: string;
+    };
+  };
+}
+
+export interface ValidationResponse {
+  valid: boolean;
+  warnings: string[];
+  errors: string[];
+}
+
 // Use the non-blob API client
 const authApiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -148,5 +189,54 @@ export const getProjectPreview = async (
     }
     console.error("Unknown API Error fetching preview:", error);
     throw new Error("An unknown error occurred while fetching the preview.");
+  }
+};
+
+/**
+ * Fetch all available versions from the backend
+ */
+export const getAllVersions = async (): Promise<VersionsResponse> => {
+  try {
+    const response = await authApiClient.get<VersionsResponse>("/versions");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("API Error fetching versions:", error.response.data);
+      throw new Error(
+        error.response.data?.message || "Failed to fetch versions."
+      );
+    } else if (error instanceof Error) {
+      console.error("API Error:", error);
+      throw error;
+    }
+    console.error("Unknown API Error fetching versions:", error);
+    throw new Error("An unknown error occurred while fetching versions.");
+  }
+};
+
+/**
+ * Validate project configuration for version compatibility
+ */
+export const validateProjectConfig = async (
+  config: ProjectConfig
+): Promise<ValidationResponse> => {
+  try {
+    const response = await authApiClient.post<ValidationResponse>(
+      "/versions/validate",
+      config
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("API Error validating config:", error.response.data);
+      throw new Error(
+        error.response.data?.message || "Failed to validate configuration."
+      );
+    } else if (error instanceof Error) {
+      console.error("API Error:", error);
+      throw error;
+    }
+    console.error("Unknown API Error validating config:", error);
+    throw new Error("An unknown error occurred while validating configuration.");
   }
 };

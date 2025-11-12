@@ -25,8 +25,20 @@ const projectConfigSchema = Joi.object({
     .pattern(/^1\.\d+(\.\d+)?$/)
     .message("Invalid Go version format (e.g., 1.22 or 1.22.4)")
     .optional(),
+  frameworkVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .message("Invalid framework version format (e.g., v1.10.0)")
+    .optional(),
   database: Joi.string()
     .valid("mongodb", "sqlite", "postgres", "mysql", "none")
+    .optional(),
+  databaseVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .message("Invalid database version format (e.g., v1.15.0)")
+    .optional(),
+  gormVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .message("Invalid GORM version format (e.g., v1.25.10)")
     .optional(),
   dbConfig: Joi.when("database", {
     switch: [
@@ -76,6 +88,19 @@ const projectConfigSchema = Joi.object({
     otherwise: dbConfigSchema.optional(),
   }),
   features: Joi.array().items(Joi.string()).optional(),
+  // Feature versions
+  logrusVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .optional(),
+  zapVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .optional(),
+  testifyVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .optional(),
+  viperVersion: Joi.string()
+    .pattern(/^v?\d+\.\d+\.\d+$/)
+    .optional(),
 });
 
 function validateProjectConfig(input) {

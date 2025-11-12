@@ -5,9 +5,9 @@ module <%= modulePath %>
 go <%= goVersion.match(/\d+\.\d+/)[0] %> // Extract major.minor (e.g., 1.22 from 1.22.4)
 
 require (
-	<% if (framework === 'gin') { %>github.com/gin-gonic/gin v1.10.0<% } %>
-	<% if (framework === 'echo') { %>github.com/labstack/echo/v4 v4.12.0<% } %>
-	<% if (framework === 'chi') { %>github.com/go-chi/chi/v5 v5.0.12<% } %>
+	<% if (framework === 'gin') { %>github.com/gin-gonic/gin <%= frameworkVersion || 'v1.10.0' %><% } %>
+	<% if (framework === 'echo') { %>github.com/labstack/echo/v4 <%= frameworkVersion || 'v4.12.0' %><% } %>
+	<% if (framework === 'chi') { %>github.com/go-chi/chi/v5 <%= frameworkVersion || 'v5.0.12' %><% } %>
 	<%# Conditionally add chi CORS if desired/needed %>
 	<% if (framework === 'chi') { %>// github.com/go-chi/cors v1.2.1 // Optional: For CORS middleware<% } %>
 
@@ -15,21 +15,21 @@ require (
 	<%# Database dependencies %>
 	<% if (database !== 'none') { %>
 		<% if (['postgres', 'mysql', 'sqlite'].includes(database)) { %>
-			gorm.io/gorm v1.25.10
-			<% if (database === 'postgres') { %>gorm.io/driver/postgres v1.5.7<% } %>
-			<% if (database === 'mysql') { %>gorm.io/driver/mysql v1.5.6<% } %>
-			<% if (database === 'sqlite') { %>gorm.io/driver/sqlite v1.5.5<% } %>
+			gorm.io/gorm <%= gormVersion || 'v1.25.10' %>
+			<% if (database === 'postgres') { %>gorm.io/driver/postgres <%= databaseVersion || 'v1.5.7' %><% } %>
+			<% if (database === 'mysql') { %>gorm.io/driver/mysql <%= databaseVersion || 'v1.5.6' %><% } %>
+			<% if (database === 'sqlite') { %>gorm.io/driver/sqlite <%= databaseVersion || 'v1.5.5' %><% } %>
 		<% } %>
-		<% if (database === 'mongodb') { %>go.mongodb.org/mongo-driver v1.15.0<% } %>
+		<% if (database === 'mongodb') { %>go.mongodb.org/mongo-driver <%= databaseVersion || 'v1.15.0' %><% } %>
 	<% } %>
 
 	<%# Configuration library (example using Viper) %>
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper <%= viperVersion || 'v1.18.2' %>
 
 	<%# Optional Feature dependencies %>
-	<% if (options.includes('logrus')) { %>github.com/sirupsen/logrus v1.9.3<% } %>
-	<% if (options.includes('zap')) { %>go.uber.org/zap v1.27.0<% } %>
-	<% if (options.includes('testify')) { %>github.com/stretchr/testify v1.9.0<% } %>
+	<% if (options.includes('logrus')) { %>github.com/sirupsen/logrus <%= logrusVersion || 'v1.9.3' %><% } %>
+	<% if (options.includes('zap')) { %>go.uber.org/zap <%= zapVersion || 'v1.27.0' %><% } %>
+	<% if (options.includes('testify')) { %>github.com/stretchr/testify <%= testifyVersion || 'v1.9.0' %><% } %>
 
 	<% if (includeIndirectDeps) { %>
 	<%# Indirect dependencies might be needed - 'go mod tidy' handles this %>

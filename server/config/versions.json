@@ -1,0 +1,348 @@
+{
+  "go": {
+    "versions": [
+      {
+        "version": "1.24.1",
+        "label": "1.24.1 (Latest)",
+        "releaseDate": "2025-01-08",
+        "isRecommended": true,
+        "minimumVersion": "1.24"
+      },
+      {
+        "version": "1.24.0",
+        "label": "1.24.0",
+        "releaseDate": "2025-01-07",
+        "isRecommended": false,
+        "minimumVersion": "1.24"
+      },
+      {
+        "version": "1.23.5",
+        "label": "1.23.5",
+        "releaseDate": "2024-12-05",
+        "isRecommended": false,
+        "minimumVersion": "1.23"
+      },
+      {
+        "version": "1.23.0",
+        "label": "1.23.0",
+        "releaseDate": "2024-08-13",
+        "isRecommended": false,
+        "minimumVersion": "1.23"
+      },
+      {
+        "version": "1.22.10",
+        "label": "1.22.10",
+        "releaseDate": "2024-12-05",
+        "isRecommended": false,
+        "minimumVersion": "1.22"
+      },
+      {
+        "version": "1.22.0",
+        "label": "1.22.0",
+        "releaseDate": "2024-02-06",
+        "isRecommended": false,
+        "minimumVersion": "1.22"
+      },
+      {
+        "version": "1.21.13",
+        "label": "1.21.13",
+        "releaseDate": "2024-09-05",
+        "isRecommended": false,
+        "minimumVersion": "1.21"
+      }
+    ],
+    "default": "1.24.1"
+  },
+  "frameworks": {
+    "gin": {
+      "versions": [
+        {
+          "version": "v1.10.0",
+          "label": "v1.10.0 (Latest)",
+          "releaseDate": "2024-05-15",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v1.9.1",
+          "label": "v1.9.1",
+          "releaseDate": "2023-08-24",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v1.9.0",
+          "label": "v1.9.0",
+          "releaseDate": "2023-02-21",
+          "isRecommended": false,
+          "minGoVersion": "1.19"
+        }
+      ],
+      "default": "v1.10.0"
+    },
+    "echo": {
+      "versions": [
+        {
+          "version": "v4.12.0",
+          "label": "v4.12.0 (Latest)",
+          "releaseDate": "2024-04-20",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v4.11.4",
+          "label": "v4.11.4",
+          "releaseDate": "2024-01-15",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v4.11.0",
+          "label": "v4.11.0",
+          "releaseDate": "2023-10-10",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v4.12.0"
+    },
+    "chi": {
+      "versions": [
+        {
+          "version": "v5.0.12",
+          "label": "v5.0.12 (Latest)",
+          "releaseDate": "2024-03-25",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v5.0.11",
+          "label": "v5.0.11",
+          "releaseDate": "2023-12-10",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v5.0.10",
+          "label": "v5.0.10",
+          "releaseDate": "2023-08-15",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v5.0.12"
+    }
+  },
+  "databases": {
+    "gorm": {
+      "versions": [
+        {
+          "version": "v1.25.10",
+          "label": "v1.25.10 (Latest)",
+          "releaseDate": "2024-05-10",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v1.25.7",
+          "label": "v1.25.7",
+          "releaseDate": "2024-02-20",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v1.25.5",
+          "label": "v1.25.5",
+          "releaseDate": "2023-12-15",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v1.25.10"
+    },
+    "postgres": {
+      "versions": [
+        {
+          "version": "v1.5.7",
+          "label": "v1.5.7 (Latest)",
+          "releaseDate": "2024-03-15",
+          "isRecommended": true,
+          "minGoVersion": "1.21",
+          "compatibleGormVersions": ["v1.25.10", "v1.25.7", "v1.25.5"]
+        },
+        {
+          "version": "v1.5.6",
+          "label": "v1.5.6",
+          "releaseDate": "2023-12-10",
+          "isRecommended": false,
+          "minGoVersion": "1.20",
+          "compatibleGormVersions": ["v1.25.7", "v1.25.5"]
+        }
+      ],
+      "default": "v1.5.7"
+    },
+    "mysql": {
+      "versions": [
+        {
+          "version": "v1.5.6",
+          "label": "v1.5.6 (Latest)",
+          "releaseDate": "2024-03-10",
+          "isRecommended": true,
+          "minGoVersion": "1.21",
+          "compatibleGormVersions": ["v1.25.10", "v1.25.7", "v1.25.5"]
+        },
+        {
+          "version": "v1.5.4",
+          "label": "v1.5.4",
+          "releaseDate": "2023-11-20",
+          "isRecommended": false,
+          "minGoVersion": "1.20",
+          "compatibleGormVersions": ["v1.25.7", "v1.25.5"]
+        }
+      ],
+      "default": "v1.5.6"
+    },
+    "sqlite": {
+      "versions": [
+        {
+          "version": "v1.5.5",
+          "label": "v1.5.5 (Latest)",
+          "releaseDate": "2024-02-28",
+          "isRecommended": true,
+          "minGoVersion": "1.21",
+          "compatibleGormVersions": ["v1.25.10", "v1.25.7", "v1.25.5"]
+        },
+        {
+          "version": "v1.5.4",
+          "label": "v1.5.4",
+          "releaseDate": "2023-11-15",
+          "isRecommended": false,
+          "minGoVersion": "1.20",
+          "compatibleGormVersions": ["v1.25.7", "v1.25.5"]
+        }
+      ],
+      "default": "v1.5.5"
+    },
+    "mongodb": {
+      "versions": [
+        {
+          "version": "v1.15.0",
+          "label": "v1.15.0 (Latest)",
+          "releaseDate": "2024-04-15",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v1.14.0",
+          "label": "v1.14.0",
+          "releaseDate": "2024-01-10",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v1.13.1",
+          "label": "v1.13.1",
+          "releaseDate": "2023-10-25",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v1.15.0"
+    }
+  },
+  "features": {
+    "logrus": {
+      "versions": [
+        {
+          "version": "v1.9.3",
+          "label": "v1.9.3 (Latest)",
+          "releaseDate": "2023-05-30",
+          "isRecommended": true,
+          "minGoVersion": "1.19"
+        },
+        {
+          "version": "v1.9.0",
+          "label": "v1.9.0",
+          "releaseDate": "2022-03-10",
+          "isRecommended": false,
+          "minGoVersion": "1.18"
+        }
+      ],
+      "default": "v1.9.3"
+    },
+    "zap": {
+      "versions": [
+        {
+          "version": "v1.27.0",
+          "label": "v1.27.0 (Latest)",
+          "releaseDate": "2024-02-15",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v1.26.0",
+          "label": "v1.26.0",
+          "releaseDate": "2023-10-20",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v1.27.0"
+    },
+    "testify": {
+      "versions": [
+        {
+          "version": "v1.9.0",
+          "label": "v1.9.0 (Latest)",
+          "releaseDate": "2024-01-25",
+          "isRecommended": true,
+          "minGoVersion": "1.20"
+        },
+        {
+          "version": "v1.8.4",
+          "label": "v1.8.4",
+          "releaseDate": "2023-07-15",
+          "isRecommended": false,
+          "minGoVersion": "1.19"
+        }
+      ],
+      "default": "v1.9.0"
+    },
+    "viper": {
+      "versions": [
+        {
+          "version": "v1.18.2",
+          "label": "v1.18.2 (Latest)",
+          "releaseDate": "2024-01-30",
+          "isRecommended": true,
+          "minGoVersion": "1.21"
+        },
+        {
+          "version": "v1.18.0",
+          "label": "v1.18.0",
+          "releaseDate": "2023-12-01",
+          "isRecommended": false,
+          "minGoVersion": "1.20"
+        }
+      ],
+      "default": "v1.18.2"
+    }
+  },
+  "compatibility": {
+    "rules": [
+      {
+        "description": "Go 1.24.x requires framework versions with minimum Go 1.21+",
+        "condition": {
+          "goVersion": ">=1.24",
+          "frameworkMinVersion": ">=1.21"
+        }
+      },
+      {
+        "description": "GORM drivers must be compatible with GORM core version",
+        "condition": {
+          "requiresGormCompatibility": true
+        }
+      }
+    ]
+  }
+}
